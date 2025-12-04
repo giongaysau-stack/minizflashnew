@@ -1,0 +1,10 @@
+# MiniZ Flash Pro
+
+Files to ignore when uploading to GitHub
+
+wrangler.toml
+
+src/worker.js
+.wrangler/
+
+LICENSE_KEYS_PRIVATE.txt

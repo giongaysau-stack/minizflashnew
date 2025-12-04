@@ -1,0 +1,18 @@
+# Firmware folder
+
+Thư mục này chứa firmware demo (miễn phí).
+
+**Firmware có license** được lưu trong private repository và được tải qua Cloudflare Worker API.
+
+## Cấu trúc
+
+```
+firmware/
+├── demo.bin          # Firmware demo miễn phí
+└── .gitkeep
+```
+
+## Lưu ý
+
+- Chỉ đặt firmware demo/miễn phí trong thư mục này
+- Firmware yêu cầu license được lưu trong repo private
