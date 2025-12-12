@@ -1,0 +1,11 @@
+﻿name = "miniznew"
+main = "src/worker.js"
+compatibility_date = "2025-11-29"
+
+[[kv_namespaces]]
+binding = "LICENSE_BINDINGS"
+id = "b6a474cb11024056a1ced5c8a9380f39"
+
+# Environment variables - Set these in Cloudflare Dashboard or use secrets
+# SECRET_KEY: Set via Cloudflare Dashboard -> Workers -> Settings -> Variables
+# GITHUB_TOKEN: Set via command: wrangler secret put GITHUB_TOKEN

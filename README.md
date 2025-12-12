@@ -46,33 +46,57 @@
 4. Đặt tên: `minizflashnew-api`
 5. Click **Deploy**
 
-### 3.2. Thêm code
+### 3.2. Cấu hình bảo mật (QUAN TRỌNG ⚠️)
 
-1. Click **Edit code**
-2. Copy toàn bộ nội dung file `cloudflare-worker.js`
-3. Paste vào editor
-4. **QUAN TRỌNG**: Thay đổi các giá trị trong CONFIG:
-   - `SECRET_KEY`: Đổi thành key bí mật của bạn
-   - `TURNSTILE_SECRET`: Secret Key từ bước 2
+**Đọc kỹ file [SECURITY_SETUP.md](SECURITY_SETUP.md) trước khi tiếp tục!**
 
-### 3.3. Thêm KV Namespace
+#### Setup Environment Variables & Secrets:
 
-1. Trong Worker, vào **Settings** → **Variables**
-2. **KV Namespace Bindings** → Add binding
-3. Tạo mới KV namespace
-4. Variable name: `LICENSE_BINDINGS`
+```bash
+# 1. Set SECRET_KEY (dùng wrangler secret cho bảo mật)
+wrangler secret put SECRET_KEY
+# Nhập secret key của bạn (32+ ký tự ngẫu nhiên)
 
-### 3.4. Thêm Environment Variable
+# 2. Set GITHUB_TOKEN
+wrangler secret put GITHUB_TOKEN
+# Paste GitHub Personal Access Token (từ bước 1.3)
 
-1. Trong **Settings** → **Variables** → **Environment Variables**
-2. Add variable:
-   - Variable name: `GITHUB_TOKEN`
-   - Value: Token từ bước 1.3
+# 3. (Optional) Set TURNSTILE_SECRET
+wrangler secret put TURNSTILE_SECRET
+# Paste Turnstile secret key từ bước 2
+```
 
-### 3.5. Deploy
+**Hoặc set qua Cloudflare Dashboard:**
+1. Workers & Pages → Your Worker → Settings → Variables
+2. Click "Add variable" cho mỗi biến
+3. **Khuyến nghị**: Dùng "Encrypt" cho SECRET_KEY và GITHUB_TOKEN
 
-1. Click **Save and Deploy**
-2. Note lại URL: `https://minizflashnew-api.YOUR_SUBDOMAIN.workers.dev`
+### 3.3. Deploy code
+
+1. Clone/download repo này về máy
+2. Chỉnh sửa `wrangler.toml` nếu cần (worker name, KV namespace ID)
+3. Deploy:
+```bash
+wrangler deploy
+```
+
+### 3.4. Thêm KV Namespace
+
+1. Tạo KV namespace:
+```bash
+wrangler kv:namespace create "LICENSE_BINDINGS"
+```
+2. Copy ID và update vào `wrangler.toml`:
+```toml
+[[kv_namespaces]]
+binding = "LICENSE_BINDINGS"
+id = "your-kv-namespace-id"
+```
+
+### 3.5. Verify deployment
+
+1. Test API endpoint: `https://your-worker.workers.dev/`
+2. Kiểm tra logs: `wrangler tail`
 
 ## 🌐 Bước 4: Cấu hình Frontend
 

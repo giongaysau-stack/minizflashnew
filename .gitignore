@@ -1,10 +1,28 @@
 # MiniZ Flash Pro
 
-Files to ignore when uploading to GitHub
+# Files to ignore when uploading to GitHub
 
-wrangler.toml
+# Environment variables - NEVER commit these!
+.env
+.env.local
+.env.production
 
-src/worker.js
+# Wrangler config is now safe to commit (secrets moved to Cloudflare)
+# wrangler.toml is no longer ignored
+
+# Worker code is now safe (secrets removed)
+# src/worker.js
+
+# Wrangler build output
 .wrangler/
+worker/
 
+# Private license keys
 LICENSE_KEYS_PRIVATE.txt
+
+# Node modules (if using npm)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
