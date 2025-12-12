@@ -9,6 +9,11 @@ const CONFIG = {
     }
 };
 
+// VIP Keys - Unlimited downloads (no rate limit)
+const UNLIMITED_KEYS = new Set([
+    'MZNEW-WCJ9-HZPZ-2L9J'
+]);
+
 // 100 License Keys - Generated 2025-12-03
 const VALID_KEYS = new Set([
     'MZNEW-WCJ9-HZPZ-2L9J', 'MZNEW-S8VP-QRSL-M89X', 'MZNEW-68YY-7LAZ-MB9U',
@@ -49,9 +54,16 @@ const VALID_KEYS = new Set([
 
 // Initialize config from environment variables
 function getConfig(env) {
+    // Strip BOM if present (PowerShell encoding issue)
+    const stripBOM = (str) => {
+        if (!str) return str;
+        // Remove UTF-8 BOM (EF BB BF) and other BOMs
+        return str.replace(/^\uFEFF/, '').replace(/^ï»¿/, '').trim();
+    };
+    
     return {
-        SECRET_KEY: env.SECRET_KEY || 'default-secret-key-change-me',
-        GITHUB_TOKEN: env.GITHUB_TOKEN || null,
+        SECRET_KEY: stripBOM(env.SECRET_KEY) || 'default-secret-key-change-me',
+        GITHUB_TOKEN: stripBOM(env.GITHUB_TOKEN) || null,
         ...CONFIG
     };
 }
@@ -80,6 +92,9 @@ export default {
             if (url.pathname === '/api/download-firmware') {
                 return await downloadFirmware(request, env, cors, config);
             }
+            if (url.pathname === '/api/debug-env') {
+                return await debugEnv(request, env);
+            }
             return json({ status: 'ok', service: 'MiniZ Flash API' }, cors);
         } catch (e) {
             return json({ error: e.message }, cors, 500);
@@ -91,13 +106,13 @@ async function validateLicense(request, env, cors, config) {
     const { licenseKey, macAddress } = await request.json();
     
     if (!licenseKey || !macAddress) {
-        return json({ valid: false, error: 'Missing data' }, cors, 400);
+        return json({ valid: false, error: 'Thiếu thông tin license hoặc địa chỉ MAC' }, cors, 400);
     }
 
     const key = licenseKey.toUpperCase().trim();
     
     if (!VALID_KEYS.has(key)) {
-        return json({ valid: false, error: 'Invalid license key' }, cors);
+        return json({ valid: false, error: 'License key không hợp lệ' }, cors);
     }
 
     if (env.LICENSE_BINDINGS) {
@@ -105,48 +120,66 @@ async function validateLicense(request, env, cors, config) {
         if (binding) {
             const data = JSON.parse(binding);
             if (data.mac !== macAddress) {
-                return json({ valid: false, error: 'Key bound to another device' }, cors);
+                return json({ valid: false, error: 'Key đã được kích hoạt trên thiết bị khác' }, cors);
             }
             data.useCount++;
             await env.LICENSE_BINDINGS.put(key, JSON.stringify(data));
-            return json({ valid: true, message: 'License valid (Use #' + data.useCount + ')', accessToken: makeToken(key, macAddress, config) }, cors);
+            return json({ valid: true, message: 'License hợp lệ (Lần sử dụng #' + data.useCount + ')', accessToken: makeToken(key, macAddress, config) }, cors);
         }
         await env.LICENSE_BINDINGS.put(key, JSON.stringify({ mac: macAddress, useCount: 1, firstUsed: new Date().toISOString() }));
     }
 
-    return json({ valid: true, message: 'License activated', accessToken: makeToken(key, macAddress, config) }, cors);
+    return json({ valid: true, message: 'License đã được kích hoạt thành công', accessToken: makeToken(key, macAddress, config) }, cors);
 }
 
 async function downloadFirmware(request, env, cors, config) {
     const { firmwareId, accessToken, macAddress } = await request.json();
 
     if (!checkToken(accessToken, macAddress, config)) {
-        return json({ error: 'Invalid token' }, cors, 403);
+        return json({ error: 'Token không hợp lệ' }, cors, 403);
     }
 
-    // Rate limit: Max 10 downloads/day/MAC
-    if (env.LICENSE_BINDINGS) {
+    // Extract license key from token to check if unlimited
+    const tokenData = atob(accessToken).split('|')[0];
+    const isUnlimited = UNLIMITED_KEYS.has(tokenData);
+
+    // Rate limit: Max 20 downloads/day/MAC (skip for unlimited keys)
+    if (!isUnlimited && env.LICENSE_BINDINGS) {
         const today = new Date().toISOString().split('T')[0];
         const dlKey = 'dl:' + macAddress.replace(/:/g, '') + ':' + today;
         const count = parseInt(await env.LICENSE_BINDINGS.get(dlKey) || '0');
-        if (count >= 10) {
-            return json({ error: 'Giới hạn 10 lần tải/ngày. Thử lại ngày mai.' }, cors, 429);
+        if (count >= 20) {
+            return json({ error: 'Giới hạn 20 lần tải/ngày. Thử lại ngày mai.' }, cors, 429);
         }
         await env.LICENSE_BINDINGS.put(dlKey, String(count + 1), { expirationTtl: 86400 });
     }
 
     const path = config.FIRMWARE_FILES[firmwareId];
     if (!path) {
-        return json({ error: 'Firmware not found' }, cors, 404);
+        return json({ error: 'Không tìm thấy firmware' }, cors, 404);
     }
 
     const ghUrl = 'https://api.github.com/repos/' + config.GITHUB_REPO + '/contents/' + path;
     
     const ghToken = config.GITHUB_TOKEN;
     if (!ghToken) {
-        return json({ error: 'GitHub token not configured', debug: Object.keys(env) }, cors, 500);
+        return json({ 
+            error: 'GitHub token chưa được cấu hình', 
+            debug: { 
+                envKeys: Object.keys(env),
+                hasToken: !!env.GITHUB_TOKEN,
+                tokenPrefix: env.GITHUB_TOKEN?.substring(0, 10)
+            } 
+        }, cors, 500);
     }
-    
+
+    // Debug: Check token format
+    const tokenDebug = {
+        length: ghToken.length,
+        prefix: ghToken.substring(0, 10),
+        hasBearer: ghToken.includes('Bearer')
+    };
+
     const resp = await fetch(ghUrl, {
         headers: {
             'Authorization': 'Bearer ' + ghToken,
@@ -156,7 +189,11 @@ async function downloadFirmware(request, env, cors, config) {
     });
 
     if (!resp.ok) {
-        return json({ error: 'GitHub error: ' + resp.status }, cors, 500);
+        return json({ 
+            error: 'GitHub error: ' + resp.status,
+            debug: tokenDebug,
+            headers: Object.fromEntries(resp.headers.entries())
+        }, cors, 500);
     }
 
     const data = await resp.arrayBuffer();
@@ -239,6 +276,19 @@ function hash(s) {
     }
     return Math.abs(h).toString(16);
 }
+
+// Debug endpoint - remove in production
+async function debugEnv(request, env) {
+    const config = getConfig(env);
+    return json({
+        hasGitHubToken: !!config.GITHUB_TOKEN,
+        tokenLength: config.GITHUB_TOKEN?.length || 0,
+        tokenPrefix: config.GITHUB_TOKEN?.substring(0, 15) || 'none',
+        hasSecretKey: !!config.SECRET_KEY,
+        envKeys: Object.keys(env)
+    }, { 'Access-Control-Allow-Origin': '*' });
+}
+
 
 
 

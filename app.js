@@ -778,15 +778,28 @@ class ESPWebFlasher {
             try {
                 if (this.esploader?.hardReset) {
                     await this.esploader.hardReset();
-                } else if (this.device?.setSignals) {
-                    await this.device.setSignals({ dataTerminalReady: true });
+                    await new Promise(r => setTimeout(r, 500)); // Đợi thiết bị reset
+                    this.log('✅ Thiết bị đã được reset', 'success');
+                } else if (this.transport?.setDTR && this.transport?.setRTS) {
+                    // Thử reset bằng DTR/RTS signals
+                    await this.transport.setDTR(false);
+                    await this.transport.setRTS(true);
                     await new Promise(r => setTimeout(r, 100));
-                    await this.device.setSignals({ dataTerminalReady: false });
+                    await this.transport.setRTS(false);
+                    await new Promise(r => setTimeout(r, 500));
+                    this.log('✅ Thiết bị đã được reset', 'success');
+                } else if (this.device?.setSignals) {
+                    await this.device.setSignals({ dataTerminalReady: false, requestToSend: true });
+                    await new Promise(r => setTimeout(r, 100));
+                    await this.device.setSignals({ requestToSend: false });
+                    await new Promise(r => setTimeout(r, 500));
+                    this.log('✅ Thiết bị đã được reset', 'success');
                 } else {
-                    this.log('⚠️ Vui lòng reset thiết bị thủ công', 'warning');
+                    this.log('⚠️ Không thể tự động reset. Vui lòng nhấn nút RESET trên thiết bị', 'warning');
                 }
             } catch (e) {
-                this.log('⚠️ Vui lòng reset thiết bị thủ công', 'warning');
+                console.error('Reset error:', e);
+                this.log('⚠️ Không thể tự động reset. Vui lòng nhấn nút RESET trên thiết bị', 'warning');
             }
 
         } catch (error) {
