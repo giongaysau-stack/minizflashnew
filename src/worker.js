@@ -15,6 +15,9 @@ const UNLIMITED_KEYS = new Set([
 ]);
 
 // 100 License Keys - Generated 2025-12-03
+// NOTE: These keys are intentionally public in source code
+// Security relies on MAC address binding in KV storage
+// Each key can only be bound to ONE device MAC address
 const VALID_KEYS = new Set([
     'MZNEW-WCJ9-HZPZ-2L9J', 'MZNEW-S8VP-QRSL-M89X', 'MZNEW-68YY-7LAZ-MB9U',
     'MZNEW-RWPL-RFQ8-BMCE', 'MZNEW-NQ9N-4PL6-2TJ2', 'MZNEW-LAYL-6X7V-DVWA',
@@ -92,9 +95,10 @@ export default {
             if (url.pathname === '/api/download-firmware') {
                 return await downloadFirmware(request, env, cors, config);
             }
-            if (url.pathname === '/api/debug-env') {
-                return await debugEnv(request, env);
-            }
+            // Debug endpoint - DISABLED on production for security
+            // if (url.pathname === '/api/debug-env') {
+            //     return await debugEnv(request, env);
+            // }
             return json({ status: 'ok', service: 'MiniZ Flash API' }, cors);
         } catch (e) {
             return json({ error: e.message }, cors, 500);
