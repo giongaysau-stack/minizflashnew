@@ -570,6 +570,26 @@ h1 {
     height: 100%;
 }
 
+.guide-btn {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    text-decoration: none;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.guide-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+}
+
 .firmware-card h3 {
     margin: 8px 0;
     color: var(--text-color);
