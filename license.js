@@ -40,14 +40,14 @@ class LicenseManager {
 
         try {
             // Gọi Worker API để validate
-            const response = await fetch(`${this.apiUrl}/api/license/validate`, {
+            const response = await fetch(`${this.apiUrl}/api/validate-license`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    key: normalizedKey,
-                    mac: macAddress
+                    licenseKey: normalizedKey,
+                    macAddress: macAddress
                 })
             });
 
