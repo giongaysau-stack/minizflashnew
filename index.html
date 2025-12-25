@@ -73,25 +73,56 @@
             <p class="subtitle">Nạp firmware ESP32/ESP8266 an toàn và bảo mật</p>
         </header>
 
-        <!-- Browser Warning -->
-        <div class="warning-box">
-            <strong>⚠️ Yêu cầu:</strong> Sử dụng Chrome, Edge hoặc Opera với Web Serial API.
+        <!-- Main Navigation Tabs -->
+        <div class="main-nav">
+            <button class="main-nav-btn active" data-page="flash">
+                <span class="nav-icon">⚡</span>
+                <span>Flash</span>
+            </button>
+            <button class="main-nav-btn" data-page="console">
+                <span class="nav-icon">📺</span>
+                <span>Console</span>
+            </button>
+            <button class="main-nav-btn" data-page="settings">
+                <span class="nav-icon">⚙️</span>
+                <span>Cài đặt</span>
+            </button>
+            <button class="main-nav-btn" data-page="about">
+                <span class="nav-icon">ℹ️</span>
+                <span>Giới thiệu</span>
+            </button>
         </div>
 
-        <!-- Step 1: Connect Device -->
-        <div class="card">
-            <h2>📡 Bước 1: Kết nối thiết bị</h2>
-            <div class="connect-section">
-                <button id="connectBtn" class="btn btn-primary">
-                    <span class="btn-icon">🔌</span>
-                    Kết nối thiết bị ESP
-                </button>
-                <div id="connectionStatus" class="status-badge disconnected">Chưa kết nối</div>
+        <!-- Connection Status Bar -->
+        <div id="connectionBar" class="connection-bar disconnected">
+            <div class="conn-status">
+                <span class="conn-icon">🔌</span>
+                <span id="connStatusText">Chưa kết nối thiết bị</span>
             </div>
-            <div id="deviceInfo" class="device-info hidden"></div>
+            <button id="quickConnectBtn" class="quick-connect-btn">Kết nối</button>
         </div>
 
-        <!-- Step 2: Select Firmware -->
+        <!-- ========== FLASH PAGE ========== -->
+        <div id="flashPage" class="page-content active">
+            <!-- Browser Warning -->
+            <div class="warning-box">
+                <strong>⚠️ Yêu cầu:</strong> Sử dụng Chrome, Edge hoặc Opera với Web Serial API.
+            </div>
+
+            <!-- Step 1: Connect Device -->
+            <div class="card">
+                <h2>📡 Bước 1: Kết nối thiết bị</h2>
+                <div class="connect-section">
+                    <button id="connectBtn" class="btn btn-primary">
+                        <span class="btn-icon">🔌</span>
+                        Kết nối thiết bị ESP
+                    </button>
+                    <div id="connectionStatus" class="status-badge disconnected">Chưa kết nối</div>
+                </div>
+                <div id="deviceInfo" class="device-info hidden"></div>
+            </div>
+
+            <!-- Step 2: Select Firmware -->
         <div class="card">
             <h2>📦 Bước 2: Chọn Firmware</h2>
             
@@ -294,8 +325,152 @@
                 </div>
             </div>
         </div>
+        </div> <!-- End Flash Page -->
+
+        <!-- ========== CONSOLE PAGE ========== -->
+        <div id="consolePage" class="page-content">
+            <div class="console-page-container">
+                <!-- Device Info Banner -->
+                <div id="consoleDeviceInfo" class="console-device-banner">
+                    <span class="device-status-icon">🔌</span>
+                    <span id="consoleDeviceText">Chưa kết nối thiết bị - Nhấn "Kết nối" để bắt đầu</span>
+                </div>
+
+                <!-- Full Console Terminal -->
+                <div class="full-console">
+                    <div class="full-console-header">
+                        <div class="console-title">
+                            <span class="terminal-icon">📺</span>
+                            <span>Serial Console</span>
+                            <span id="consoleConnStatus" class="console-conn-status disconnected">● Offline</span>
+                        </div>
+                        <div class="console-toolbar">
+                            <select id="consoleBaud" class="console-baud-select">
+                                <option value="9600">9600</option>
+                                <option value="19200">19200</option>
+                                <option value="38400">38400</option>
+                                <option value="57600">57600</option>
+                                <option value="115200" selected>115200</option>
+                                <option value="230400">230400</option>
+                                <option value="460800">460800</option>
+                                <option value="921600">921600</option>
+                            </select>
+                            <button id="consoleConnectBtn" class="console-btn connect">
+                                <span>▶</span> Kết nối
+                            </button>
+                            <button id="consoleDisconnectBtn" class="console-btn disconnect" disabled>
+                                <span>⏹</span> Ngắt
+                            </button>
+                            <div class="console-divider"></div>
+                            <button id="consoleClearBtn" class="console-btn clear">
+                                <span>🗑</span> Xóa
+                            </button>
+                            <button id="consoleResetBtn" class="console-btn reset">
+                                <span>🔄</span> Reset ESP
+                            </button>
+                        </div>
+                    </div>
+                    <div id="fullConsoleOutput" class="full-console-output">
+                        <div class="console-welcome">
+esptool.js
+─────────────────────────────────────────────
+Sẵn sàng kết nối Serial Console.
+Nhấn "Kết nối" và chọn cổng COM để bắt đầu.
+
+Hỗ trợ: ESP32, ESP32-S2, ESP32-S3, ESP32-C3, ESP8266
+─────────────────────────────────────────────
+                        </div>
+                    </div>
+                    <div class="full-console-input">
+                        <span class="input-prompt">❯</span>
+                        <input type="text" id="consoleInput" class="console-input-field" placeholder="Nhập lệnh và nhấn Enter..." disabled>
+                        <button id="consoleSendBtn" class="console-send-btn" disabled>Gửi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SETTINGS PAGE ========== -->
+        <div id="settingsPage" class="page-content">
+            <div class="card">
+                <h2>⚙️ Cài đặt</h2>
+                <div class="settings-group">
+                    <h3>Cài đặt Flash</h3>
+                    <div class="setting-item">
+                        <label>Baud Rate mặc định:</label>
+                        <select id="defaultBaud" class="select-field">
+                            <option value="115200">115200</option>
+                            <option value="230400">230400</option>
+                            <option value="460800">460800</option>
+                            <option value="921600" selected>921600</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="autoReset" checked>
+                            Tự động reset sau khi flash
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="verifyFlash">
+                            Verify sau khi flash
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3>Cài đặt Console</h3>
+                    <div class="setting-item">
+                        <label>Baud Rate Console:</label>
+                        <select id="defaultConsoleBaud" class="select-field">
+                            <option value="9600">9600</option>
+                            <option value="115200" selected>115200</option>
+                            <option value="230400">230400</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="autoScroll" checked>
+                            Tự động cuộn console
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="showTimestamp" checked>
+                            Hiện timestamp
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== ABOUT PAGE ========== -->
+        <div id="aboutPage" class="page-content">
+            <div class="card about-card">
+                <div class="about-logo">⚡</div>
+                <h2>MiniZ Flash Pro</h2>
+                <p class="version">Version 2.0.0</p>
+                <p class="about-desc">
+                    Công cụ nạp firmware ESP32/ESP8266 trực tiếp trên trình duyệt web, 
+                    an toàn và bảo mật với hệ thống license key.
+                </p>
+                <div class="about-features">
+                    <div class="feature-item">✅ Hỗ trợ ESP32, ESP32-S2, ESP32-S3, ESP32-C3</div>
+                    <div class="feature-item">✅ Hỗ trợ ESP8266</div>
+                    <div class="feature-item">✅ Serial Console tích hợp</div>
+                    <div class="feature-item">✅ Bảo mật với License Key</div>
+                    <div class="feature-item">✅ Cloudflare Protection</div>
+                </div>
+                <div class="about-links">
+                    <a href="https://docs.google.com/document/d/1y4MCysKizg2X0hdWK2iLHYK3ZhvCR30X9ndaF0r-W28/edit?usp=sharing" target="_blank" class="about-link">📖 Hướng dẫn sử dụng</a>
+                    <a href="https://www.facebook.com/permalink.php?story_fbid=pfbid0DebcxLL8tZbPiBh8bd3RuzUwZxcudgzA1KHP3uvSHSrors2taRMysyTjz75qo1Ual&id=61584284200312" target="_blank" class="about-link">🛒 Mua License Key</a>
+                </div>
+                <p class="copyright">© 2025 MiniZ Team - Powered by esptool-js</p>
+            </div>
+        </div>
 
         <!-- Footer -->
+        <footer>
         <footer>
             <div class="footer-security">
                 <span>🛡️ Bảo mật bởi Cloudflare</span>

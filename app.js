@@ -103,7 +103,15 @@ class ESPWebFlasher {
         // Connect button
         document.getElementById('connectBtn').addEventListener('click', () => this.connectDevice());
         
-        // Tab switching
+        // Quick connect button
+        document.getElementById('quickConnectBtn')?.addEventListener('click', () => this.connectDevice());
+        
+        // Main navigation
+        document.querySelectorAll('.main-nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.switchPage(btn.dataset.page));
+        });
+        
+        // Tab switching (firmware tabs)
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
         });
@@ -133,6 +141,41 @@ class ESPWebFlasher {
             document.getElementById('consoleOutput').innerHTML = '';
             this.log('Console đã được xóa', 'info');
         });
+        
+        // Buy license popup
+        document.getElementById('buyLicenseBtn')?.addEventListener('click', () => {
+            document.getElementById('buyPopup')?.classList.remove('hidden');
+        });
+        
+        document.getElementById('closePopup')?.addEventListener('click', () => {
+            document.getElementById('buyPopup')?.classList.add('hidden');
+        });
+        
+        document.getElementById('buyPopup')?.addEventListener('click', (e) => {
+            if (e.target.id === 'buyPopup') {
+                document.getElementById('buyPopup')?.classList.add('hidden');
+            }
+        });
+    }
+
+    /**
+     * Switch main page
+     */
+    switchPage(pageName) {
+        // Update nav buttons
+        document.querySelectorAll('.main-nav-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.page === pageName);
+        });
+        
+        // Update pages
+        document.querySelectorAll('.page-content').forEach(page => {
+            page.classList.remove('active');
+        });
+        
+        const targetPage = document.getElementById(`${pageName}Page`);
+        if (targetPage) {
+            targetPage.classList.add('active');
+        }
     }
 
     /**
@@ -863,6 +906,7 @@ class ESPWebFlasher {
      * Initialize Serial Monitor
      */
     initializeSerialMonitor() {
+        // Old serial monitor (in flash page)
         const startBtn = document.getElementById('startMonitorBtn');
         const stopBtn = document.getElementById('stopMonitorBtn');
         const clearBtn = document.getElementById('clearMonitorBtn');
@@ -879,6 +923,239 @@ class ESPWebFlasher {
                 this.sendSerialData();
             }
         });
+        
+        // Full Console Page
+        const consoleConnectBtn = document.getElementById('consoleConnectBtn');
+        const consoleDisconnectBtn = document.getElementById('consoleDisconnectBtn');
+        const consoleClearBtn = document.getElementById('consoleClearBtn');
+        const consoleResetBtn = document.getElementById('consoleResetBtn');
+        const consoleSendBtn = document.getElementById('consoleSendBtn');
+        const consoleInput = document.getElementById('consoleInput');
+
+        consoleConnectBtn?.addEventListener('click', () => this.startFullConsole());
+        consoleDisconnectBtn?.addEventListener('click', () => this.stopFullConsole());
+        consoleClearBtn?.addEventListener('click', () => this.clearFullConsole());
+        consoleResetBtn?.addEventListener('click', () => this.resetESPFromConsole());
+        consoleSendBtn?.addEventListener('click', () => this.sendConsoleData());
+        
+        consoleInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.sendConsoleData();
+            }
+        });
+    }
+
+    /**
+     * Start Full Console (Console Page)
+     */
+    async startFullConsole() {
+        try {
+            const baudRate = parseInt(document.getElementById('consoleBaud').value);
+            
+            this.monitorPort = await navigator.serial.requestPort();
+            await this.monitorPort.open({ baudRate });
+            
+            this.monitorRunning = true;
+            this.updateFullConsoleStatus(true);
+            this.consoleLog(`Serial port WebSerial`, 'info');
+            this.consoleLog(`Connecting...`, 'system');
+            this.consoleLog(`Baud rate: ${baudRate}`, 'info');
+            
+            // Update UI
+            document.getElementById('consoleInput').disabled = false;
+            document.getElementById('consoleSendBtn').disabled = false;
+            document.getElementById('consoleConnectBtn').disabled = true;
+            document.getElementById('consoleDisconnectBtn').disabled = false;
+            document.getElementById('consoleBaud').disabled = true;
+            
+            // Update device banner
+            const banner = document.getElementById('consoleDeviceInfo');
+            banner.classList.add('connected');
+            document.getElementById('consoleDeviceText').textContent = 'Đã kết nối - Đang nhận dữ liệu...';
+            
+            // Setup writer
+            this.serialWriter = this.monitorPort.writable.getWriter();
+            
+            // Start reading
+            this.readFullConsoleData();
+            
+        } catch (error) {
+            if (error.name === 'NotFoundError') {
+                this.consoleLog('⚠️ Không có cổng Serial được chọn', 'error');
+            } else {
+                this.consoleLog('❌ Lỗi: ' + error.message, 'error');
+            }
+        }
+    }
+
+    /**
+     * Read Full Console Data
+     */
+    async readFullConsoleData() {
+        if (!this.monitorPort || !this.monitorPort.readable) return;
+
+        const decoder = new TextDecoder();
+        
+        while (this.monitorPort.readable && this.monitorRunning) {
+            this.serialReader = this.monitorPort.readable.getReader();
+            try {
+                while (true) {
+                    const { value, done } = await this.serialReader.read();
+                    if (done) break;
+                    if (value) {
+                        const text = decoder.decode(value);
+                        this.consoleLog(text, 'rx', false);
+                    }
+                }
+            } catch (error) {
+                if (this.monitorRunning) {
+                    this.consoleLog('⚠️ Lỗi đọc: ' + error.message, 'error');
+                }
+            } finally {
+                this.serialReader.releaseLock();
+            }
+        }
+    }
+
+    /**
+     * Stop Full Console
+     */
+    async stopFullConsole() {
+        this.monitorRunning = false;
+        
+        try {
+            if (this.serialReader) {
+                await this.serialReader.cancel();
+                this.serialReader.releaseLock();
+                this.serialReader = null;
+            }
+            
+            if (this.serialWriter) {
+                await this.serialWriter.close();
+                this.serialWriter = null;
+            }
+            
+            if (this.monitorPort) {
+                await this.monitorPort.close();
+                this.monitorPort = null;
+            }
+        } catch (error) {
+            console.warn('Error closing port:', error);
+        }
+        
+        this.updateFullConsoleStatus(false);
+        this.consoleLog('🔌 Đã ngắt kết nối', 'system');
+        
+        // Update UI
+        document.getElementById('consoleInput').disabled = true;
+        document.getElementById('consoleSendBtn').disabled = true;
+        document.getElementById('consoleConnectBtn').disabled = false;
+        document.getElementById('consoleDisconnectBtn').disabled = true;
+        document.getElementById('consoleBaud').disabled = false;
+        
+        // Update banner
+        const banner = document.getElementById('consoleDeviceInfo');
+        banner.classList.remove('connected');
+        document.getElementById('consoleDeviceText').textContent = 'Chưa kết nối thiết bị';
+    }
+
+    /**
+     * Send Console Data
+     */
+    async sendConsoleData() {
+        const input = document.getElementById('consoleInput');
+        const data = input.value;
+        
+        if (!data || !this.serialWriter) return;
+        
+        try {
+            const encoder = new TextEncoder();
+            await this.serialWriter.write(encoder.encode(data + '\n'));
+            this.consoleLog('❯ ' + data, 'tx');
+            input.value = '';
+        } catch (error) {
+            this.consoleLog('❌ Lỗi gửi: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Clear Full Console
+     */
+    clearFullConsole() {
+        const output = document.getElementById('fullConsoleOutput');
+        output.innerHTML = `<div class="console-welcome">
+esptool.js
+─────────────────────────────────────────────
+Console đã được xóa.
+─────────────────────────────────────────────
+</div>`;
+    }
+
+    /**
+     * Reset ESP from Console
+     */
+    async resetESPFromConsole() {
+        if (!this.monitorPort) {
+            this.consoleLog('⚠️ Chưa kết nối thiết bị', 'warning');
+            return;
+        }
+        
+        try {
+            this.consoleLog('🔄 Đang reset ESP...', 'system');
+            
+            // Toggle DTR to reset
+            await this.monitorPort.setSignals({ dataTerminalReady: false });
+            await new Promise(r => setTimeout(r, 100));
+            await this.monitorPort.setSignals({ dataTerminalReady: true });
+            
+            this.consoleLog('✅ Đã gửi tín hiệu reset', 'success');
+        } catch (error) {
+            this.consoleLog('❌ Lỗi reset: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Update Full Console Status
+     */
+    updateFullConsoleStatus(connected) {
+        const status = document.getElementById('consoleConnStatus');
+        if (connected) {
+            status.className = 'console-conn-status connected';
+            status.textContent = '● Online';
+        } else {
+            status.className = 'console-conn-status disconnected';
+            status.textContent = '● Offline';
+        }
+    }
+
+    /**
+     * Log to Full Console
+     */
+    consoleLog(message, type = 'rx', addTimestamp = true) {
+        const output = document.getElementById('fullConsoleOutput');
+        
+        // Remove welcome if exists
+        const welcome = output.querySelector('.console-welcome');
+        if (welcome) {
+            welcome.remove();
+        }
+        
+        const line = document.createElement('div');
+        line.className = `console-line ${type}`;
+        
+        if (addTimestamp) {
+            const timestamp = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'console-timestamp';
+            timeSpan.textContent = `[${timestamp}]`;
+            line.appendChild(timeSpan);
+        }
+        
+        const textNode = document.createTextNode(message);
+        line.appendChild(textNode);
+        
+        output.appendChild(line);
+        output.scrollTop = output.scrollHeight;
     }
 
     /**
