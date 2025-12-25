@@ -11,12 +11,13 @@ class LicenseManager {
     }
 
     /**
-     * Validate format - MZNEW-XXXX-XXXX-XXXX (chỉ check format, không check key)
+     * Validate format - XXXX-XXXX-XXXX-XXXX (19 ký tự)
      */
     isValidFormat(key) {
         if (!key || typeof key !== 'string') return false;
         const normalized = key.toUpperCase().trim().replace(/\s+/g, '');
-        const pattern = /^MZNEW-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+        // Format mới: XXXX-XXXX-XXXX-XXXX (19 ký tự)
+        const pattern = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
         return pattern.test(normalized);
     }
 
@@ -33,7 +34,7 @@ class LicenseManager {
         if (!this.isValidFormat(normalizedKey)) {
             return { 
                 valid: false, 
-                message: 'Sai định dạng. Sử dụng: MZNEW-XXXX-XXXX-XXXX (19 ký tự)' 
+                message: 'Sai định dạng. Sử dụng: XXXX-XXXX-XXXX-XXXX (19 ký tự)' 
             };
         }
 
