@@ -38,6 +38,29 @@
         </div>
     </div>
 
+    <!-- Buy License Popup -->
+    <div id="buyPopup" class="popup-overlay hidden">
+        <div class="popup-modal">
+            <button class="popup-close" id="closePopup">×</button>
+            <div class="popup-header">
+                <div class="popup-icon">🛒</div>
+                <h2>Mua License Key</h2>
+                <p>Nhận license key ngay để sử dụng firmware cao cấp</p>
+            </div>
+            <div class="popup-content">
+                <div class="price-info">
+                    <h3>💎 License Key - Không giới hạn</h3>
+                    <p class="price-desc">✅ Sử dụng vĩnh viễn, không giới hạn thiết bị</p>
+                    <p class="price-desc">✅ Hỗ trợ tất cả firmware cao cấp</p>
+                    <p class="price-desc">✅ Cập nhật miễn phí trọn đời</p>
+                </div>
+                <a href="https://www.facebook.com/permalink.php?story_fbid=pfbid0DebcxLL8tZbPiBh8bd3RuzUwZxcudgzA1KHP3uvSHSrors2taRMysyTjz75qo1Ual&id=61584284200312&rdid=E0kD93WZQLjN57EN#" target="_blank" class="buy-now-btn">
+                    📱 Liên hệ mua ngay qua Facebook
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Application Content -->
     <div id="mainContent" class="container hidden">
         <!-- Header -->
@@ -112,7 +135,10 @@
                         <span class="license-badge">🔑 Yêu cầu License</span>
                     </div>
                 </div>
-                <a href="https://docs.google.com/document/d/1y4MCysKizg2X0hdWK2iLHYK3ZhvCR30X9ndaF0r-W28/edit?usp=sharing" target="_blank" class="guide-btn">📖 Hướng dẫn sử dụng</a>
+                <div class="action-buttons">
+                    <button id="buyLicenseBtn" class="guide-btn buy-btn">🛒 Mua License Key</button>
+                    <a href="https://docs.google.com/document/d/1y4MCysKizg2X0hdWK2iLHYK3ZhvCR30X9ndaF0r-W28/edit?usp=sharing" target="_blank" class="guide-btn">📖 Hướng dẫn sử dụng</a>
+                </div>
                 
                 <!-- License Key Input Section -->
                 <div id="licenseSection" class="license-section hidden">
@@ -267,6 +293,30 @@
                     window.initializeFlasher();
                 }
             }, 500);
+
+            // Buy popup handlers
+            const buyLicenseBtn = document.getElementById('buyLicenseBtn');
+            const buyPopup = document.getElementById('buyPopup');
+            const closePopup = document.getElementById('closePopup');
+
+            if (buyLicenseBtn) {
+                buyLicenseBtn.addEventListener('click', () => {
+                    buyPopup.classList.remove('hidden');
+                });
+            }
+
+            if (closePopup) {
+                closePopup.addEventListener('click', () => {
+                    buyPopup.classList.add('hidden');
+                });
+            }
+
+            // Close popup when clicking outside
+            buyPopup?.addEventListener('click', (e) => {
+                if (e.target === buyPopup) {
+                    buyPopup.classList.add('hidden');
+                }
+            });
         });
     </script>
     </script>
