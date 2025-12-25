@@ -823,12 +823,39 @@ h1 {
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4);
+    text-align: center;
 }
 
 .buy-now-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
     background: linear-gradient(135deg, #0c63e4, #1877f2);
+}
+
+.contact-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.facebook-btn {
+    background: linear-gradient(135deg, #1877f2, #0c63e4);
+    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4);
+}
+
+.facebook-btn:hover {
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
+    background: linear-gradient(135deg, #0c63e4, #1877f2);
+}
+
+.zalo-btn {
+    background: linear-gradient(135deg, #0068ff, #0052cc);
+    box-shadow: 0 4px 12px rgba(0, 104, 255, 0.4);
+}
+
+.zalo-btn:hover {
+    box-shadow: 0 6px 20px rgba(0, 104, 255, 0.6);
+    background: linear-gradient(135deg, #0052cc, #0068ff);
 }
 
 @keyframes fadeIn {
