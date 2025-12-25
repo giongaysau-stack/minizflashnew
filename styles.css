@@ -537,6 +537,39 @@ h1 {
     margin-bottom: 10px;
 }
 
+/* Firmware Image Styles */
+.firmware-image {
+    width: 100%;
+    height: 120px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.firmware-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.firmware-card:hover .firmware-image img {
+    transform: scale(1.05);
+}
+
+.firmware-icon-fallback {
+    font-size: 3rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
 .firmware-card h3 {
     margin: 8px 0;
     color: var(--text-color);
