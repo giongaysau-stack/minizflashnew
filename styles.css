@@ -1175,6 +1175,230 @@ h1 {
 .log-line.warning { color: #fbbf24; }
 .log-line.info { color: #60a5fa; }
 
+/* ========== Serial Monitor ========== */
+.serial-monitor {
+    margin-top: 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.serial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: linear-gradient(135deg, #1a365d, #2d3748);
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.serial-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.serial-icon {
+    font-size: 1.2rem;
+}
+
+.serial-status {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.serial-status.disconnected {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.serial-status.connected {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+}
+
+.serial-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.monitor-baud {
+    padding: 6px 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.monitor-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.monitor-btn.start {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.monitor-btn.start:hover:not(:disabled) {
+    background: linear-gradient(135deg, #059669, #10b981);
+    transform: translateY(-1px);
+}
+
+.monitor-btn.stop {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.monitor-btn.stop:hover:not(:disabled) {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    transform: translateY(-1px);
+}
+
+.monitor-btn.clear {
+    background: rgba(100, 116, 139, 0.3);
+    color: var(--text-muted);
+}
+
+.monitor-btn.clear:hover {
+    background: rgba(100, 116, 139, 0.5);
+}
+
+.monitor-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.serial-output {
+    height: 250px;
+    overflow-y: auto;
+    padding: 12px 15px;
+    background: #0d1117;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #c9d1d9;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.serial-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.serial-output::-webkit-scrollbar-track {
+    background: #0d1117;
+}
+
+.serial-output::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 4px;
+}
+
+.serial-placeholder {
+    color: #6e7681;
+    text-align: center;
+    padding-top: 100px;
+}
+
+.serial-line {
+    margin-bottom: 2px;
+}
+
+.serial-line.rx {
+    color: #58a6ff;
+}
+
+.serial-line.tx {
+    color: #f0883e;
+}
+
+.serial-line.error {
+    color: #f85149;
+}
+
+.serial-line.system {
+    color: #8b949e;
+    font-style: italic;
+}
+
+.serial-timestamp {
+    color: #6e7681;
+    margin-right: 8px;
+    font-size: 0.75rem;
+}
+
+.serial-input-container {
+    display: flex;
+    padding: 10px 15px;
+    background: #161b22;
+    border-top: 1px solid var(--border-color);
+    gap: 10px;
+}
+
+.serial-input {
+    flex: 1;
+    padding: 10px 12px;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    color: var(--text-color);
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.serial-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.serial-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.send-serial-btn {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--primary-color), #6366f1);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.send-serial-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #6366f1, var(--primary-color));
+    transform: translateY(-1px);
+}
+
+.send-serial-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* ========== Footer ========== */
 footer {
     text-align: center;

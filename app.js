@@ -36,6 +36,12 @@ class ESPWebFlasher {
         // Worker API URL
         this.workerApiUrl = 'https://miniznew.giongaysau.workers.dev';
         
+        // Serial Monitor state
+        this.serialReader = null;
+        this.serialWriter = null;
+        this.monitorRunning = false;
+        this.monitorPort = null;
+        
         // Initialize managers
         this.security = new SecurityManager();
         this.license = new LicenseManager();
@@ -43,6 +49,7 @@ class ESPWebFlasher {
         // Initialize
         this.initializeSecurity();
         this.initializeUI();
+        this.initializeSerialMonitor();
         this.checkWebSerialSupport();
         this.displaySessionInfo();
     }
@@ -850,6 +857,202 @@ class ESPWebFlasher {
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    /**
+     * Initialize Serial Monitor
+     */
+    initializeSerialMonitor() {
+        const startBtn = document.getElementById('startMonitorBtn');
+        const stopBtn = document.getElementById('stopMonitorBtn');
+        const clearBtn = document.getElementById('clearMonitorBtn');
+        const sendBtn = document.getElementById('sendSerialBtn');
+        const serialInput = document.getElementById('serialInput');
+
+        startBtn?.addEventListener('click', () => this.startSerialMonitor());
+        stopBtn?.addEventListener('click', () => this.stopSerialMonitor());
+        clearBtn?.addEventListener('click', () => this.clearSerialMonitor());
+        sendBtn?.addEventListener('click', () => this.sendSerialData());
+        
+        serialInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.sendSerialData();
+            }
+        });
+    }
+
+    /**
+     * Start Serial Monitor
+     */
+    async startSerialMonitor() {
+        try {
+            const baudRate = parseInt(document.getElementById('monitorBaud').value);
+            
+            // Request a port
+            this.monitorPort = await navigator.serial.requestPort();
+            await this.monitorPort.open({ baudRate });
+            
+            this.monitorRunning = true;
+            this.updateMonitorStatus(true);
+            this.serialLog('📡 Đã kết nối Serial Monitor @ ' + baudRate + ' baud', 'system');
+            
+            // Enable input
+            document.getElementById('serialInput').disabled = false;
+            document.getElementById('sendSerialBtn').disabled = false;
+            document.getElementById('startMonitorBtn').disabled = true;
+            document.getElementById('stopMonitorBtn').disabled = false;
+            document.getElementById('monitorBaud').disabled = true;
+            
+            // Setup writer
+            this.serialWriter = this.monitorPort.writable.getWriter();
+            
+            // Start reading
+            this.readSerialData();
+            
+        } catch (error) {
+            if (error.name === 'NotFoundError') {
+                this.serialLog('⚠️ Không có cổng Serial được chọn', 'error');
+            } else {
+                this.serialLog('❌ Lỗi: ' + error.message, 'error');
+            }
+        }
+    }
+
+    /**
+     * Read Serial Data continuously
+     */
+    async readSerialData() {
+        if (!this.monitorPort || !this.monitorPort.readable) return;
+
+        const decoder = new TextDecoder();
+        
+        while (this.monitorPort.readable && this.monitorRunning) {
+            this.serialReader = this.monitorPort.readable.getReader();
+            try {
+                while (true) {
+                    const { value, done } = await this.serialReader.read();
+                    if (done) break;
+                    if (value) {
+                        const text = decoder.decode(value);
+                        this.serialLog(text, 'rx', false);
+                    }
+                }
+            } catch (error) {
+                if (this.monitorRunning) {
+                    this.serialLog('⚠️ Lỗi đọc: ' + error.message, 'error');
+                }
+            } finally {
+                this.serialReader.releaseLock();
+            }
+        }
+    }
+
+    /**
+     * Stop Serial Monitor
+     */
+    async stopSerialMonitor() {
+        this.monitorRunning = false;
+        
+        try {
+            if (this.serialReader) {
+                await this.serialReader.cancel();
+                this.serialReader.releaseLock();
+                this.serialReader = null;
+            }
+            
+            if (this.serialWriter) {
+                await this.serialWriter.close();
+                this.serialWriter = null;
+            }
+            
+            if (this.monitorPort) {
+                await this.monitorPort.close();
+                this.monitorPort = null;
+            }
+        } catch (error) {
+            console.warn('Error closing port:', error);
+        }
+        
+        this.updateMonitorStatus(false);
+        this.serialLog('🔌 Đã ngắt kết nối Serial Monitor', 'system');
+        
+        // Disable input
+        document.getElementById('serialInput').disabled = true;
+        document.getElementById('sendSerialBtn').disabled = true;
+        document.getElementById('startMonitorBtn').disabled = false;
+        document.getElementById('stopMonitorBtn').disabled = true;
+        document.getElementById('monitorBaud').disabled = false;
+    }
+
+    /**
+     * Send data to Serial
+     */
+    async sendSerialData() {
+        const input = document.getElementById('serialInput');
+        const data = input.value;
+        
+        if (!data || !this.serialWriter) return;
+        
+        try {
+            const encoder = new TextEncoder();
+            await this.serialWriter.write(encoder.encode(data + '\n'));
+            this.serialLog('TX: ' + data, 'tx');
+            input.value = '';
+        } catch (error) {
+            this.serialLog('❌ Lỗi gửi: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Clear Serial Monitor
+     */
+    clearSerialMonitor() {
+        const output = document.getElementById('serialOutput');
+        output.innerHTML = '<div class="serial-placeholder">💡 Nhấn "Bắt đầu" để xem output từ ESP32/ESP8266</div>';
+    }
+
+    /**
+     * Update monitor connection status
+     */
+    updateMonitorStatus(connected) {
+        const status = document.getElementById('serialStatus');
+        if (connected) {
+            status.className = 'serial-status connected';
+            status.textContent = '● Đã kết nối';
+        } else {
+            status.className = 'serial-status disconnected';
+            status.textContent = '● Chưa kết nối';
+        }
+    }
+
+    /**
+     * Log to Serial Monitor output
+     */
+    serialLog(message, type = 'rx', addTimestamp = true) {
+        const output = document.getElementById('serialOutput');
+        
+        // Remove placeholder if exists
+        const placeholder = output.querySelector('.serial-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+        
+        const line = document.createElement('div');
+        line.className = `serial-line ${type}`;
+        
+        if (addTimestamp) {
+            const timestamp = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'serial-timestamp';
+            timeSpan.textContent = `[${timestamp}]`;
+            line.appendChild(timeSpan);
+        }
+        
+        const textNode = document.createTextNode(message);
+        line.appendChild(textNode);
+        
+        output.appendChild(line);
+        output.scrollTop = output.scrollHeight;
     }
 }
 

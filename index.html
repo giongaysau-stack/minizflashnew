@@ -260,6 +260,39 @@
                     Đang chờ xác thực bảo mật...
                 </div>
             </div>
+
+            <!-- Serial Monitor Section -->
+            <div id="serialMonitor" class="serial-monitor">
+                <div class="serial-header">
+                    <div class="serial-title">
+                        <span class="serial-icon">📡</span>
+                        <span>Serial Monitor</span>
+                        <span id="serialStatus" class="serial-status disconnected">● Chưa kết nối</span>
+                    </div>
+                    <div class="serial-controls">
+                        <select id="monitorBaud" class="monitor-baud">
+                            <option value="9600">9600</option>
+                            <option value="19200">19200</option>
+                            <option value="38400">38400</option>
+                            <option value="57600">57600</option>
+                            <option value="115200" selected>115200</option>
+                            <option value="230400">230400</option>
+                            <option value="460800">460800</option>
+                            <option value="921600">921600</option>
+                        </select>
+                        <button id="startMonitorBtn" class="monitor-btn start">▶ Bắt đầu</button>
+                        <button id="stopMonitorBtn" class="monitor-btn stop" disabled>⏹ Dừng</button>
+                        <button id="clearMonitorBtn" class="monitor-btn clear">🗑 Xóa</button>
+                    </div>
+                </div>
+                <div id="serialOutput" class="serial-output">
+                    <div class="serial-placeholder">💡 Nhấn "Bắt đầu" để xem output từ ESP32/ESP8266</div>
+                </div>
+                <div class="serial-input-container">
+                    <input type="text" id="serialInput" class="serial-input" placeholder="Nhập lệnh gửi đến ESP..." disabled>
+                    <button id="sendSerialBtn" class="send-serial-btn" disabled>Gửi</button>
+                </div>
+            </div>
         </div>
 
         <!-- Footer -->
